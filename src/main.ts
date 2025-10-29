@@ -5,8 +5,13 @@ import { AppModule } from './app.module';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   
+  // Update CORS to include your Vercel domain
   app.enableCors({
-    origin: '*',
+    origin: [
+      'http://localhost:5173',           // Local development
+      'https://midicine.vercel.app',     // Your Vercel production
+      'https://*.vercel.app'              // All Vercel preview deployments
+    ],
     credentials: true,
   });
   
