@@ -3,6 +3,8 @@ import { ConfigModule } from '@nestjs/config';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { FirebaseModule } from './firebase/firebase.module';
+import { AdminAuthModule } from './admin/admin-auth.module';
+
 @Module({
   imports: [
     // Load environment variables
@@ -12,6 +14,8 @@ import { FirebaseModule } from './firebase/firebase.module';
     }),
     // Firebase Module
     FirebaseModule,
+    // Admin Authentication Module
+    AdminAuthModule,
   ],
   controllers: [AppController],
   providers: [AppService],
