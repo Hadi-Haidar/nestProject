@@ -4,6 +4,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { FirebaseModule } from './firebase/firebase.module';
 import { AdminAuthModule } from './admin/admin-auth.module';
+import { PharmacyModule } from './pharmacy/pharmacy.module';
 
 @Module({
   imports: [
@@ -16,6 +17,8 @@ import { AdminAuthModule } from './admin/admin-auth.module';
     FirebaseModule,
     // Admin Authentication Module
     AdminAuthModule,
+    // Pharmacy Module
+    PharmacyModule,
   ],
   controllers: [AppController],
   providers: [AppService],
