@@ -5,6 +5,7 @@ import { AppService } from './app.service';
 import { FirebaseModule } from './firebase/firebase.module';
 import { AdminAuthModule } from './admin/admin-auth.module';
 import { PharmacyModule } from './pharmacy/pharmacy.module';
+import { MedicineModule } from './medicine/medicine.module'; // ADD THIS
 
 @Module({
   imports: [
@@ -19,6 +20,8 @@ import { PharmacyModule } from './pharmacy/pharmacy.module';
     AdminAuthModule,
     // Pharmacy Module
     PharmacyModule,
+    // Medicine Module
+    MedicineModule, // ADD THIS
   ],
   controllers: [AppController],
   providers: [AppService],
