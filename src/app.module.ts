@@ -6,7 +6,7 @@ import { FirebaseModule } from './firebase/firebase.module';
 import { AdminAuthModule } from './admin/admin-auth.module';
 import { PharmacyModule } from './pharmacy/pharmacy.module';
 import { MedicineModule } from './medicine/medicine.module'; // ADD THIS
-
+import { UserModule } from './user/user.module';
 @Module({
   imports: [
     // Load environment variables
@@ -22,6 +22,8 @@ import { MedicineModule } from './medicine/medicine.module'; // ADD THIS
     PharmacyModule,
     // Medicine Module
     MedicineModule, // ADD THIS
+    // User Module
+    UserModule,
   ],
   controllers: [AppController],
   providers: [AppService],
