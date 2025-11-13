@@ -14,7 +14,7 @@ import {
   UploadedFile,
   ParseFilePipe,
   MaxFileSizeValidator,
-  FileTypeValidator,
+  BadRequestException,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { PharmacyService } from './pharmacy.service';
@@ -33,12 +33,19 @@ export class PharmacyController {
       new ParseFilePipe({
         validators: [
           new MaxFileSizeValidator({ maxSize: 5 * 1024 * 1024 }),
-          new FileTypeValidator({ fileType: /^image\/(jpeg|jpg|png|webp)$/ }), // FIX: Match mimetypes
         ],
       }),
     )
     file: Express.Multer.File,
   ) {
+    // Manual validation for image types
+    const allowedMimeTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+    if (!allowedMimeTypes.includes(file.mimetype)) {
+      throw new BadRequestException(
+        `Invalid file type. Allowed types: ${allowedMimeTypes.join(', ')}`
+      );
+    }
+
     const imageUrl = await this.pharmacyService.uploadPharmacyImage(file);
     return {
       message: 'Image uploaded successfully',
@@ -87,13 +94,22 @@ export class PharmacyController {
       new ParseFilePipe({
         validators: [
           new MaxFileSizeValidator({ maxSize: 5 * 1024 * 1024 }),
-          new FileTypeValidator({ fileType: /^image\/(jpeg|jpg|png|webp)$/ }), // FIX: Match mimetypes
         ],
         fileIsRequired: false,
       }),
     )
     file?: Express.Multer.File,
   ) {
+    // Manual validation for image types (if file provided)
+    if (file) {
+      const allowedMimeTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+      if (!allowedMimeTypes.includes(file.mimetype)) {
+        throw new BadRequestException(
+          `Invalid file type. Allowed types: ${allowedMimeTypes.join(', ')}`
+        );
+      }
+    }
+
     return this.pharmacyService.update(id, updatePharmacyDto, file);
   }
 
