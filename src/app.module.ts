@@ -7,6 +7,7 @@ import { AdminAuthModule } from './admin/admin-auth.module';
 import { PharmacyModule } from './pharmacy/pharmacy.module';
 import { MedicineModule } from './medicine/medicine.module'; // ADD THIS
 import { UserModule } from './user/user.module';
+import { ExportModule } from './export/export.module';
 @Module({
   imports: [
     // Load environment variables
@@ -24,6 +25,8 @@ import { UserModule } from './user/user.module';
     MedicineModule, // ADD THIS
     // User Module
     UserModule,
+    // Export Module
+    ExportModule,
   ],
   controllers: [AppController],
   providers: [AppService],

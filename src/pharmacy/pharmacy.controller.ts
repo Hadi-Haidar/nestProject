@@ -15,6 +15,7 @@ import {
   ParseFilePipe,
   MaxFileSizeValidator,
   BadRequestException,
+  NotFoundException,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { PharmacyService } from './pharmacy.service';
@@ -76,6 +77,22 @@ export class PharmacyController {
   @Get('search')
   async search(@Query('q') query: string) {
     return this.pharmacyService.search(query);
+  }
+
+  // Get all pharmacy owners
+  @Get('owners/all')
+  async getAllOwners() {
+    return this.pharmacyService.findAllOwners();
+  }
+
+  // Get a specific owner by ID
+  @Get('owners/:id')
+  async getOwnerById(@Param('id') id: string) {
+    const owner = await this.pharmacyService.findOwnerById(id);
+    if (!owner) {
+      throw new NotFoundException(`Owner with ID ${id} not found`);
+    }
+    return owner;
   }
 
   // Get pharmacy by ID

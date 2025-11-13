@@ -282,6 +282,18 @@ export class PharmacyService {
   // PHARMACY OWNER OPERATIONS
   // ========================================
 
+  /**
+   * Get all pharmacy owners
+   */
+  async findAllOwners(): Promise<PharmacyOwner[]> {
+    const snapshot = await this.firestore.collection(this.ownersCollection).get();
+    
+    return snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data(),
+    })) as PharmacyOwner[];
+  }
+
   // Find owner by email (for duplicate check and login)
   async findOwnerByEmail(email: string): Promise<PharmacyOwner | null> {
     const snapshot = await this.firestore
