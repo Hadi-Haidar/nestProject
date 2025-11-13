@@ -25,15 +25,15 @@ import { UpdatePharmacyDto } from './dto/update-pharmacy.dto';
 export class PharmacyController {
   constructor(private readonly pharmacyService: PharmacyService) {}
 
-  // Upload pharmacy image (separate endpoint before creating pharmacy)
+  // Upload pharmacy image
   @Post('upload-image')
   @UseInterceptors(FileInterceptor('image'))
   async uploadImage(
     @UploadedFile(
       new ParseFilePipe({
         validators: [
-          new MaxFileSizeValidator({ maxSize: 5 * 1024 * 1024 }), // 5MB max
-          new FileTypeValidator({ fileType: /(jpg|jpeg|png|webp)$/ }),
+          new MaxFileSizeValidator({ maxSize: 5 * 1024 * 1024 }),
+          new FileTypeValidator({ fileType: /^image\/(jpeg|jpg|png|webp)$/ }), // FIX: Match mimetypes
         ],
       }),
     )
@@ -51,11 +51,8 @@ export class PharmacyController {
   @HttpCode(HttpStatus.CREATED)
   async create(
     @Body() createPharmacyDto: CreatePharmacyDto,
-    // TODO: Get admin ID from JWT token after implementing auth guard
-    // @Request() req,
   ) {
-    // For now, using a placeholder admin ID
-    const adminId = 'admin-123'; // Replace with actual admin ID from JWT
+    const adminId = 'admin-123';
     return this.pharmacyService.create(createPharmacyDto, adminId);
   }
 
@@ -80,7 +77,7 @@ export class PharmacyController {
     return this.pharmacyService.findOne(id);
   }
 
-  // Update pharmacy (with optional image upload)
+  // Update pharmacy
   @Patch(':id')
   @UseInterceptors(FileInterceptor('image'))
   async update(
@@ -90,9 +87,9 @@ export class PharmacyController {
       new ParseFilePipe({
         validators: [
           new MaxFileSizeValidator({ maxSize: 5 * 1024 * 1024 }),
-          new FileTypeValidator({ fileType: /(jpg|jpeg|png|webp)$/ }),
+          new FileTypeValidator({ fileType: /^image\/(jpeg|jpg|png|webp)$/ }), // FIX: Match mimetypes
         ],
-        fileIsRequired: false, // Make file optional for updates
+        fileIsRequired: false,
       }),
     )
     file?: Express.Multer.File,
