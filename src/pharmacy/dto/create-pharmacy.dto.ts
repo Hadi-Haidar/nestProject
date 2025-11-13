@@ -40,8 +40,10 @@ export class CreatePharmacyDto {
   @MinLength(10)
   description: string;
 
+  // Image will be uploaded via separate endpoint, so this is optional now
   @IsString()
-  imageUrl: string; // Will be uploaded first, then URL provided
+  @IsOptional()
+  imageUrl?: string;
 
   @ValidateNested()
   @Type(() => LocationDto)

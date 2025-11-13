@@ -10,7 +10,13 @@ import {
   Query,
   HttpCode,
   HttpStatus,
+  UseInterceptors,
+  UploadedFile,
+  ParseFilePipe,
+  MaxFileSizeValidator,
+  FileTypeValidator,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { PharmacyService } from './pharmacy.service';
 import { CreatePharmacyDto } from './dto/create-pharmacy.dto';
 import { UpdatePharmacyDto } from './dto/update-pharmacy.dto';
@@ -18,6 +24,27 @@ import { UpdatePharmacyDto } from './dto/update-pharmacy.dto';
 @Controller('admin/pharmacies')
 export class PharmacyController {
   constructor(private readonly pharmacyService: PharmacyService) {}
+
+  // Upload pharmacy image (separate endpoint before creating pharmacy)
+  @Post('upload-image')
+  @UseInterceptors(FileInterceptor('image'))
+  async uploadImage(
+    @UploadedFile(
+      new ParseFilePipe({
+        validators: [
+          new MaxFileSizeValidator({ maxSize: 5 * 1024 * 1024 }), // 5MB max
+          new FileTypeValidator({ fileType: /(jpg|jpeg|png|webp)$/ }),
+        ],
+      }),
+    )
+    file: Express.Multer.File,
+  ) {
+    const imageUrl = await this.pharmacyService.uploadPharmacyImage(file);
+    return {
+      message: 'Image uploaded successfully',
+      imageUrl,
+    };
+  }
 
   // Create new pharmacy
   @Post()
@@ -53,13 +80,24 @@ export class PharmacyController {
     return this.pharmacyService.findOne(id);
   }
 
-  // Update pharmacy
+  // Update pharmacy (with optional image upload)
   @Patch(':id')
+  @UseInterceptors(FileInterceptor('image'))
   async update(
     @Param('id') id: string,
     @Body() updatePharmacyDto: UpdatePharmacyDto,
+    @UploadedFile(
+      new ParseFilePipe({
+        validators: [
+          new MaxFileSizeValidator({ maxSize: 5 * 1024 * 1024 }),
+          new FileTypeValidator({ fileType: /(jpg|jpeg|png|webp)$/ }),
+        ],
+        fileIsRequired: false, // Make file optional for updates
+      }),
+    )
+    file?: Express.Multer.File,
   ) {
-    return this.pharmacyService.update(id, updatePharmacyDto);
+    return this.pharmacyService.update(id, updatePharmacyDto, file);
   }
 
   // Delete pharmacy

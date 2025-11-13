@@ -6,6 +6,7 @@ import { CreatePharmacyDto } from './dto/create-pharmacy.dto';
 import { UpdatePharmacyDto } from './dto/update-pharmacy.dto';
 import { Pharmacy } from './entities/pharmacy.entity';
 import { PharmacyOwner } from './entities/pharmacy-owner.entity';
+import { FirebaseStorageService } from '../firebase/firebase-storage.service';
 import * as bcrypt from 'bcrypt';
 
 @Injectable()
@@ -14,7 +15,7 @@ export class PharmacyService {
   private pharmaciesCollection = 'pharmacies';
   private ownersCollection = 'pharmacy-owners';
 
-  constructor() {
+  constructor(private readonly storageService: FirebaseStorageService) {
     this.firestore = new Firestore({
       projectId: process.env.FIREBASE_PROJECT_ID,
       credentials: {
@@ -22,6 +23,24 @@ export class PharmacyService {
         private_key: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
       },
     });
+  }
+
+  // ========================================
+  // IMAGE UPLOAD METHODS
+  // ========================================
+
+  /**
+   * Upload pharmacy image to Firebase Storage
+   */
+  async uploadPharmacyImage(file: Express.Multer.File): Promise<string> {
+    return await this.storageService.uploadImage(file, 'pharmacies');
+  }
+
+  /**
+   * Delete pharmacy image from Firebase Storage
+   */
+  async deletePharmacyImage(imageUrl: string): Promise<void> {
+    await this.storageService.deleteImage(imageUrl);
   }
 
   // ========================================
@@ -57,7 +76,7 @@ export class PharmacyService {
     const pharmacyData: Omit<Pharmacy, 'id'> = {
       title: createPharmacyDto.title,
       description: createPharmacyDto.description,
-      imageUrl: createPharmacyDto.imageUrl,
+      imageUrl: createPharmacyDto.imageUrl || '', // Use uploaded image URL
       location: createPharmacyDto.location,
       ownerId: ownerId,
       workingHours: createPharmacyDto.workingHours,
@@ -155,8 +174,12 @@ export class PharmacyService {
     };
   }
 
-  // Update pharmacy
-  async update(id: string, updatePharmacyDto: UpdatePharmacyDto) {
+  // Update pharmacy (with optional image upload)
+  async update(
+    id: string,
+    updatePharmacyDto: UpdatePharmacyDto,
+    file?: Express.Multer.File,
+  ) {
     const docRef = this.firestore.collection(this.pharmaciesCollection).doc(id);
     const doc = await docRef.get();
 
@@ -171,6 +194,16 @@ export class PharmacyService {
       ...updatePharmacyDto,
       updatedAt: new Date(),
     };
+
+    // If new image file is uploaded
+    if (file) {
+      // Delete old image if exists
+      if (pharmacy.imageUrl) {
+        await this.deletePharmacyImage(pharmacy.imageUrl);
+      }
+      // Upload new image
+      updateData.imageUrl = await this.uploadPharmacyImage(file);
+    }
 
     // If updating owner info, update the owner document separately
     if (updatePharmacyDto.ownerEmail || updatePharmacyDto.ownerPassword || updatePharmacyDto.ownerName) {
@@ -191,7 +224,7 @@ export class PharmacyService {
     return this.findOneWithOwner(id);
   }
 
-  // Delete pharmacy (also deletes owner)
+  // Delete pharmacy (also deletes owner and image)
   async remove(id: string): Promise<{ message: string }> {
     const docRef = this.firestore.collection(this.pharmaciesCollection).doc(id);
     const doc = await docRef.get();
@@ -202,6 +235,11 @@ export class PharmacyService {
 
     const pharmacy = doc.data() as Pharmacy;
 
+    // Delete image from storage if exists
+    if (pharmacy.imageUrl) {
+      await this.deletePharmacyImage(pharmacy.imageUrl);
+    }
+
     // Delete owner first
     await this.deleteOwner(pharmacy.ownerId);
 
@@ -209,7 +247,7 @@ export class PharmacyService {
     await docRef.delete();
 
     return {
-      message: `Pharmacy and owner account deleted successfully`,
+      message: `Pharmacy, owner account, and image deleted successfully`,
     };
   }
 
