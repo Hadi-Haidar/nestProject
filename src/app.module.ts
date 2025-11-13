@@ -5,9 +5,10 @@ import { AppService } from './app.service';
 import { FirebaseModule } from './firebase/firebase.module';
 import { AdminAuthModule } from './admin/admin-auth.module';
 import { PharmacyModule } from './pharmacy/pharmacy.module';
-import { MedicineModule } from './medicine/medicine.module'; // ADD THIS
+import { MedicineModule } from './medicine/medicine.module';
 import { UserModule } from './user/user.module';
 import { ExportModule } from './export/export.module';
+import { DashboardModule } from './dashboard/dashboard.module';
 @Module({
   imports: [
     // Load environment variables
@@ -22,11 +23,13 @@ import { ExportModule } from './export/export.module';
     // Pharmacy Module
     PharmacyModule,
     // Medicine Module
-    MedicineModule, // ADD THIS
+    MedicineModule,
     // User Module
     UserModule,
     // Export Module
     ExportModule,
+    // Dashboard Module
+    DashboardModule,
   ],
   controllers: [AppController],
   providers: [AppService],
