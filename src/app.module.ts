@@ -9,6 +9,7 @@ import { MedicineModule } from './medicine/medicine.module';
 import { UserModule } from './user/user.module';
 import { ExportModule } from './export/export.module';
 import { DashboardModule } from './dashboard/dashboard.module';
+import { PharmacyOwnerModule } from './pharmacy-owner/pharmacy-owner.module';
 @Module({
   imports: [
     // Load environment variables
@@ -30,6 +31,8 @@ import { DashboardModule } from './dashboard/dashboard.module';
     ExportModule,
     // Dashboard Module
     DashboardModule,
+    // Pharmacy Owner Module
+    PharmacyOwnerModule,
   ],
   controllers: [AppController],
   providers: [AppService],
