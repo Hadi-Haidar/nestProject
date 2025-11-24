@@ -10,6 +10,7 @@ import { UserModule } from './user/user.module';
 import { ExportModule } from './export/export.module';
 import { DashboardModule } from './dashboard/dashboard.module';
 import { PharmacyOwnerModule } from './pharmacy-owner/pharmacy-owner.module';
+import { ChatModule } from './chat/chat.module';
 @Module({
   imports: [
     // Load environment variables
@@ -33,6 +34,8 @@ import { PharmacyOwnerModule } from './pharmacy-owner/pharmacy-owner.module';
     DashboardModule,
     // Pharmacy Owner Module
     PharmacyOwnerModule,
+    // Chat Module
+    ChatModule,
   ],
   controllers: [AppController],
   providers: [AppService],
