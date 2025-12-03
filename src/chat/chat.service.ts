@@ -42,21 +42,20 @@ export class ChatService {
       }
 
       // Create new conversation
-      const now = new Date();
       const newConversation: Omit<Conversation, 'id'> = {
         userId: dto.userId,
         pharmacyOwnerId: dto.pharmacyOwnerId,
         pharmacyId: dto.pharmacyId,
         lastMessage: '',
         lastMessageType: 'text',
-        lastMessageAt: now,
+        lastMessageAt: admin.firestore.FieldValue.serverTimestamp(),
         lastMessageSenderId: '',
         lastMessageSenderType: 'user',
         unreadCountUser: 0,
         unreadCountPharmacyOwner: 0,
         status: 'active',
-        createdAt: now,
-        updatedAt: now,
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
       };
 
       const docRef = await this.db.collection('conversations').add(newConversation);
@@ -151,7 +150,6 @@ export class ChatService {
         messageType = 'text';
       }
 
-      const now = new Date();
       const newMessage: Omit<Message, 'id'> = {
         conversationId: dto.conversationId,
         senderId: dto.senderId,
@@ -160,7 +158,7 @@ export class ChatService {
         content: dto.content || '',
         type: messageType,
         status: 'sent',
-        createdAt: now,
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
       };
 
       // Only add imageUrl if it exists
@@ -176,7 +174,6 @@ export class ChatService {
         dto.conversationId,
         dto.content || '[Image]',
         messageType,
-        now,
         dto.senderId,
         dto.senderType,
       );
@@ -225,8 +222,6 @@ export class ChatService {
    */
   async markMessagesAsRead(dto: MarkReadDto): Promise<{ success: boolean; markedCount: number }> {
     try {
-      const now = new Date();
-
       // Get all unread messages for this reader in this conversation
       const snapshot = await this.db
         .collection('messages')
@@ -245,7 +240,7 @@ export class ChatService {
       messagesToMark.forEach(doc => {
         batch.update(doc.ref, {
           status: 'read',
-          readAt: now,
+          readAt: admin.firestore.FieldValue.serverTimestamp(),
         });
       });
 
@@ -297,7 +292,6 @@ export class ChatService {
     conversationId: string,
     lastMessage: string,
     lastMessageType: 'text' | 'image' | 'text-image',
-    lastMessageAt: Date,
     senderId: string,
     senderType: 'user' | 'pharmacy-owner',
   ): Promise<void> {
@@ -307,11 +301,11 @@ export class ChatService {
       await this.db.collection('conversations').doc(conversationId).update({
         lastMessage: lastMessage,
         lastMessageType: lastMessageType,
-        lastMessageAt: lastMessageAt,
+        lastMessageAt: admin.firestore.FieldValue.serverTimestamp(),
         lastMessageSenderId: senderId,
         lastMessageSenderType: senderType,
         [unreadField]: admin.firestore.FieldValue.increment(1),
-        updatedAt: lastMessageAt,
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
       });
     } catch (error) {
       console.error('Failed to update conversation last message:', error);
@@ -326,7 +320,7 @@ export class ChatService {
     try {
       await this.db.collection('conversations').doc(conversationId).update({
         status: 'archived',
-        updatedAt: new Date(),
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
       });
 
       return { success: true };
