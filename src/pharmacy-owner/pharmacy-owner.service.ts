@@ -5,6 +5,7 @@ import { Firestore } from '@google-cloud/firestore';
 import { PharmacyMedicine } from './entities/pharmacy-medicine.entity';
 import { AddPharmacyMedicineDto } from './dto/add-pharmacy-medicine.dto';
 import { UpdatePharmacyMedicineDto } from './dto/update-pharmacy-medicine.dto';
+import { NotificationService } from '../notification/notification.service';
 
 @Injectable()
 export class PharmacyOwnerService {
@@ -13,12 +14,12 @@ export class PharmacyOwnerService {
   private medicinesCollection = 'medicines';
   private pharmaciesCollection = 'pharmacies';
 
-  constructor() {
+  constructor(private readonly notificationService: NotificationService) {
     this.firestore = new Firestore({
       projectId: process.env.FIREBASE_PROJECT_ID,
       credentials: {
         client_email: process.env.FIREBASE_CLIENT_EMAIL,
-        private_key: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
+        private_key: process.env.FIREBASE_PRIVATE_KEY?.replace(/\n/g, '\n'),
       },
     });
   }
@@ -137,6 +138,23 @@ export class PharmacyOwnerService {
     // Get medicine details
     const medicineData = medicineDoc.data();
 
+    // Trigger notification check for medicine availability
+    const medicineName = medicineData?.title || '';
+    if (pharmacyMedicineData.status === 'available' && medicineName) {
+      // Get pharmacy name
+      const pharmacyDoc = await this.firestore
+        .collection(this.pharmaciesCollection)
+        .doc(pharmacyId)
+        .get();
+      
+      if (pharmacyDoc.exists) {
+        const pharmacyName = pharmacyDoc.data()?.title || '';
+        // Check for pending notifications asynchronously (don't await)
+        this.notificationService.checkMedicineAvailability(pharmacyId, medicineName)
+          .catch(error => console.error('Error checking medicine availability:', error));
+      }
+    }
+
     return {
       id: ref.id,
       ...pharmacyMedicineData,
@@ -185,6 +203,24 @@ export class PharmacyOwnerService {
       status: updateDto.status,
       updatedAt: updatedAt,
     });
+
+    // If medicine status changed to 'available', check for pending notifications
+    if (updateDto.status === 'available' && pharmacyMedicine.status !== 'available') {
+      // Get medicine details
+      const medicineDoc = await this.firestore
+        .collection(this.medicinesCollection)
+        .doc(pharmacyMedicine.medicineId)
+        .get();
+      
+      if (medicineDoc.exists) {
+        const medicineName = medicineDoc.data()?.title || '';
+        if (medicineName) {
+          // Trigger notification check asynchronously
+          this.notificationService.checkMedicineAvailability(pharmacyId, medicineName)
+            .catch(error => console.error('Error checking medicine availability:', error));
+        }
+      }
+    }
 
     return {
       ...pharmacyMedicine,

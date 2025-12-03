@@ -70,7 +70,8 @@ export class PharmacyController {
     if (status) {
       return this.pharmacyService.findByStatus(status);
     }
-    return this.pharmacyService.findAll();
+    // Return pharmacies with owner details for admin panel
+    return this.pharmacyService.findAllWithOwners();
   }
 
   // Search pharmacies
@@ -98,7 +99,8 @@ export class PharmacyController {
   // Get pharmacy by ID
   @Get(':id')
   async findOne(@Param('id') id: string) {
-    return this.pharmacyService.findOne(id);
+    // Return pharmacy with owner details for admin panel
+    return this.pharmacyService.findOneWithOwner(id);
   }
 
   // Update pharmacy

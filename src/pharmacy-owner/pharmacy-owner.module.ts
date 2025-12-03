@@ -5,9 +5,10 @@ import { PharmacyOwnerController } from './pharmacy-owner.controller';
 import { PharmacyOwnerService } from './pharmacy-owner.service';
 import { PharmacyOwnerAuthService } from './pharmacy-owner-auth.service';
 import { PharmacyModule } from '../pharmacy/pharmacy.module';
+import { NotificationModule } from '../notification/notification.module';
 
 @Module({
-  imports: [PharmacyModule], // Import PharmacyModule to use PharmacyService
+  imports: [PharmacyModule, NotificationModule], // Import NotificationModule
   controllers: [PharmacyOwnerController],
   providers: [PharmacyOwnerService, PharmacyOwnerAuthService],
   exports: [PharmacyOwnerService, PharmacyOwnerAuthService],

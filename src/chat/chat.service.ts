@@ -158,11 +158,15 @@ export class ChatService {
         senderType: dto.senderType,
         senderName: senderName,
         content: dto.content || '',
-        imageUrl: dto.imageUrl,
         type: messageType,
         status: 'sent',
         createdAt: now,
       };
+
+      // Only add imageUrl if it exists
+      if (dto.imageUrl) {
+        newMessage.imageUrl = dto.imageUrl;
+      }
 
       // Create message in Firestore
       const messageRef = await this.db.collection('messages').add(newMessage);

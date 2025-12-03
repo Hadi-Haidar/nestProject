@@ -2,8 +2,10 @@
 
 import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
 import { Firestore } from '@google-cloud/firestore';
+import * as bcrypt from 'bcrypt';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserStatusDto } from './dto/update-user-status.dto';
+import { UpdateUserDto } from './dto/update-user.dto';
 import { User } from './entities/user.entity';
 
 @Injectable()
@@ -31,10 +33,14 @@ export class UserService {
       throw new ConflictException('User with this email already exists');
     }
 
+    // Hash the password
+    const hashedPassword = await bcrypt.hash(createUserDto.password, 10);
+
     // Build user data - ONLY include location if it exists
     const userData: any = {
       name: createUserDto.name,
       email: createUserDto.email,
+      password: hashedPassword,
       status: 'active',
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -47,10 +53,103 @@ export class UserService {
 
     const docRef = await this.firestore.collection(this.usersCollection).add(userData);
 
+    // Return user without password
+    const { password, ...userWithoutPassword } = userData;
     return {
       id: docRef.id,
-      ...userData,
+      ...userWithoutPassword,
     };
+  }
+
+  // ========================================
+  // UPDATE USER PROFILE
+  // ========================================
+  async update(id: string, updateUserDto: UpdateUserDto): Promise<User> {
+    try {
+      console.log('=== UPDATE USER START ===');
+      console.log('User ID:', id);
+      console.log('Update DTO:', JSON.stringify(updateUserDto, null, 2));
+
+      const docRef = this.firestore.collection(this.usersCollection).doc(id);
+      const doc = await docRef.get();
+
+      if (!doc.exists) {
+        throw new NotFoundException(`User with ID ${id} not found`);
+      }
+
+      console.log('Existing user data:', doc.data());
+
+      // If email is being updated, check if it's already taken
+      if (updateUserDto.email) {
+        const existingUser = await this.findByEmail(updateUserDto.email);
+        if (existingUser && existingUser.id !== id) {
+          throw new ConflictException('Email already in use');
+        }
+      }
+
+      // Convert DTO to plain object (remove class prototypes)
+      // Build update object similar to create() - only include what's provided
+      const updateData: any = {
+        updatedAt: new Date(),
+      };
+
+      if (updateUserDto.name !== undefined) {
+        updateData.name = updateUserDto.name;
+      }
+
+      if (updateUserDto.email !== undefined) {
+        updateData.email = updateUserDto.email;
+      }
+
+      if (updateUserDto.location !== undefined) {
+        // Convert location DTO to plain object
+        updateData.location = {
+          latitude: updateUserDto.location.latitude,
+          longitude: updateUserDto.location.longitude,
+        };
+      }
+
+      console.log('Update data to apply:', JSON.stringify(updateData, null, 2));
+
+      await docRef.update(updateData);
+
+      console.log('=== UPDATE SUCCESSFUL ===');
+
+      // Return updated user
+      return this.findOne(id);
+    } catch (error) {
+      console.error('=== UPDATE USER ERROR ===');
+      console.error('Error message:', error.message);
+      console.error('Error stack:', error.stack);
+      console.error('Full error:', error);
+      throw error;
+    }
+  }
+
+  // ========================================
+  // LOGIN USER (Verify credentials)
+  // ========================================
+  async login(email: string, password: string): Promise<User> {
+    const user = await this.findByEmail(email);
+    
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    // Check if user is banned
+    if (user.status === 'banned') {
+      throw new ConflictException('Your account has been banned');
+    }
+
+    // Verify password
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (!isPasswordValid) {
+      throw new ConflictException('Invalid password');
+    }
+
+    // Return user without password
+    const { password: _, ...userWithoutPassword } = user;
+    return userWithoutPassword as User;
   }
 
   // ========================================

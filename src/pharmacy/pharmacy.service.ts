@@ -189,9 +189,12 @@ export class PharmacyService {
 
     const pharmacy = doc.data() as Pharmacy;
 
+    // Convert DTO to plain object to avoid Firestore serialization issues
+    const plainUpdateData = structuredClone(updatePharmacyDto);
+
     // Update pharmacy data
     const updateData: any = {
-      ...updatePharmacyDto,
+      ...plainUpdateData,
       updatedAt: new Date(),
     };
 
@@ -207,11 +210,23 @@ export class PharmacyService {
 
     // If updating owner info, update the owner document separately
     if (updatePharmacyDto.ownerEmail || updatePharmacyDto.ownerPassword || updatePharmacyDto.ownerName) {
-      await this.updateOwner(pharmacy.ownerId, {
-        email: updatePharmacyDto.ownerEmail,
-        password: updatePharmacyDto.ownerPassword,
-        name: updatePharmacyDto.ownerName,
-      });
+      // Filter out empty strings (treat them as undefined)
+      const ownerUpdates: { email?: string; password?: string; name?: string } = {};
+      
+      if (updatePharmacyDto.ownerEmail?.trim()) {
+        ownerUpdates.email = updatePharmacyDto.ownerEmail.trim();
+      }
+      if (updatePharmacyDto.ownerPassword?.trim()) {
+        ownerUpdates.password = updatePharmacyDto.ownerPassword;
+      }
+      if (updatePharmacyDto.ownerName?.trim()) {
+        ownerUpdates.name = updatePharmacyDto.ownerName.trim();
+      }
+
+      // Only update owner if there are actual changes
+      if (Object.keys(ownerUpdates).length > 0) {
+        await this.updateOwner(pharmacy.ownerId, ownerUpdates);
+      }
 
       // Remove owner fields from pharmacy update
       delete updateData.ownerEmail;

@@ -13,18 +13,28 @@ import {
   } from '@nestjs/common';
   import { UserService } from './user.service';
   import { CreateUserDto } from './dto/create-user.dto';
+  import { LoginUserDto } from './dto/login-user.dto';
   import { UpdateUserStatusDto } from './dto/update-user-status.dto';
+  import { UpdateUserDto } from './dto/update-user.dto';
   
   @Controller('admin/users')
   export class UserController {
     constructor(private readonly userService: UserService) {}
   
     // ========================================
-    // CREATE USER (For Testing Only)
+    // CREATE USER (Sign Up)
     // ========================================
     @Post()
     async create(@Body() createUserDto: CreateUserDto) {
       return this.userService.create(createUserDto);
+    }
+
+    // ========================================
+    // LOGIN USER
+    // ========================================
+    @Post('login')
+    async login(@Body() loginUserDto: LoginUserDto) {
+      return this.userService.login(loginUserDto.email, loginUserDto.password);
     }
   
     // ========================================
@@ -65,6 +75,17 @@ import {
       return this.userService.findOne(id);
     }
   
+    // ========================================
+    // UPDATE USER PROFILE
+    // ========================================
+    @Patch(':id')
+    async update(
+      @Param('id') id: string,
+      @Body() updateUserDto: UpdateUserDto,
+    ) {
+      return this.userService.update(id, updateUserDto);
+    }
+
     // ========================================
     // UPDATE USER STATUS (Ban/Unban)
     // ========================================

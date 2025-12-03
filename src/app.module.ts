@@ -11,6 +11,8 @@ import { ExportModule } from './export/export.module';
 import { DashboardModule } from './dashboard/dashboard.module';
 import { PharmacyOwnerModule } from './pharmacy-owner/pharmacy-owner.module';
 import { ChatModule } from './chat/chat.module';
+import { NotificationModule } from './notification/notification.module';
+
 @Module({
   imports: [
     // Load environment variables
@@ -36,6 +38,8 @@ import { ChatModule } from './chat/chat.module';
     PharmacyOwnerModule,
     // Chat Module
     ChatModule,
+    // Notification Module
+    NotificationModule,
   ],
   controllers: [AppController],
   providers: [AppService],
