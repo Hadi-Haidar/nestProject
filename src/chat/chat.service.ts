@@ -48,14 +48,14 @@ export class ChatService {
         pharmacyId: dto.pharmacyId,
         lastMessage: '',
         lastMessageType: 'text',
-        lastMessageAt: admin.firestore.FieldValue.serverTimestamp(),
+        lastMessageAt: admin.firestore.FieldValue.serverTimestamp() as any,
         lastMessageSenderId: '',
         lastMessageSenderType: 'user',
         unreadCountUser: 0,
         unreadCountPharmacyOwner: 0,
         status: 'active',
-        createdAt: admin.firestore.FieldValue.serverTimestamp(),
-        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        createdAt: admin.firestore.FieldValue.serverTimestamp() as any,
+        updatedAt: admin.firestore.FieldValue.serverTimestamp() as any,
       };
 
       const docRef = await this.db.collection('conversations').add(newConversation);
@@ -158,7 +158,7 @@ export class ChatService {
         content: dto.content || '',
         type: messageType,
         status: 'sent',
-        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        createdAt: admin.firestore.FieldValue.serverTimestamp() as any,
       };
 
       // Only add imageUrl if it exists
