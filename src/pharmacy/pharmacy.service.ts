@@ -77,7 +77,11 @@ export class PharmacyService {
       title: createPharmacyDto.title,
       description: createPharmacyDto.description,
       imageUrl: createPharmacyDto.imageUrl || '', // Use uploaded image URL
-      location: createPharmacyDto.location,
+      location: {
+        latitude: createPharmacyDto.location.latitude,
+        longitude: createPharmacyDto.location.longitude,
+        address: createPharmacyDto.location.address,
+      },
       ownerId: ownerId,
       workingHours: createPharmacyDto.workingHours,
       status: createPharmacyDto.status || 'active',
@@ -190,13 +194,24 @@ export class PharmacyService {
     const pharmacy = doc.data() as Pharmacy;
 
     // Convert DTO to plain object to avoid Firestore serialization issues
-    const plainUpdateData = structuredClone(updatePharmacyDto);
-
-    // Update pharmacy data
     const updateData: any = {
-      ...plainUpdateData,
       updatedAt: new Date(),
     };
+
+    // Manually copy fields to ensure plain objects (avoid DTO class instances)
+    if (updatePharmacyDto.title !== undefined) updateData.title = updatePharmacyDto.title;
+    if (updatePharmacyDto.description !== undefined) updateData.description = updatePharmacyDto.description;
+    if (updatePharmacyDto.status !== undefined) updateData.status = updatePharmacyDto.status;
+    if (updatePharmacyDto.workingHours !== undefined) updateData.workingHours = updatePharmacyDto.workingHours;
+    
+    // Convert location DTO to plain object
+    if (updatePharmacyDto.location) {
+      updateData.location = {
+        latitude: updatePharmacyDto.location.latitude,
+        longitude: updatePharmacyDto.location.longitude,
+        address: updatePharmacyDto.location.address,
+      };
+    }
 
     // If new image file is uploaded
     if (file) {
