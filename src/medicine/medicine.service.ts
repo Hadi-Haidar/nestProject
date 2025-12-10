@@ -24,35 +24,41 @@ export class MedicineService {
 
   // ========================================
   // CREATE MEDICINE
+  // Front image is required, back image is optional
   // ========================================
   async create(
     createMedicineDto: CreateMedicineDto,
     frontImage: Express.Multer.File,
-    backImage: Express.Multer.File,
+    backImage: Express.Multer.File | undefined,
     adminId: string,
   ) {
-    // Validate images
-    if (!frontImage || !backImage) {
-      throw new BadRequestException('Both front and back images are required');
+    // Validate front image (required)
+    if (!frontImage) {
+      throw new BadRequestException('Front image is required');
     }
 
     try {
-      // Upload images to Firebase Storage
+      // Upload front image to Firebase Storage
       const frontImageUrl = await this.firebaseStorageService.uploadImage(
         frontImage,
         'medicines/front',
       );
-      const backImageUrl = await this.firebaseStorageService.uploadImage(
-        backImage,
-        'medicines/back',
-      );
+      
+      // Upload back image to Firebase Storage (if provided)
+      let backImageUrl: string | undefined;
+      if (backImage) {
+        backImageUrl = await this.firebaseStorageService.uploadImage(
+          backImage,
+          'medicines/back',
+        );
+      }
 
       // Create medicine document
       const medicineData: Omit<Medicine, 'id'> = {
         title: createMedicineDto.title,
         description: createMedicineDto.description,
         frontImageUrl,
-        backImageUrl,
+        ...(backImageUrl && { backImageUrl }), // Only include if backImage was provided
         status: createMedicineDto.status || 'available',
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -185,12 +191,14 @@ export class MedicineService {
     const medicineData = doc.data() as Medicine;
 
     try {
-      // Delete images from Firebase Storage
+      // Delete front image from Firebase Storage (required)
       if (medicineData.frontImageUrl) {
         await this.firebaseStorageService.deleteImage(
           medicineData.frontImageUrl,
         );
       }
+      
+      // Delete back image from Firebase Storage (if exists)
       if (medicineData.backImageUrl) {
         await this.firebaseStorageService.deleteImage(
           medicineData.backImageUrl,

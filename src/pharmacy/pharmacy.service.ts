@@ -83,7 +83,13 @@ export class PharmacyService {
         address: createPharmacyDto.location.address,
       },
       ownerId: ownerId,
-      workingHours: createPharmacyDto.workingHours,
+      // Convert workingHours to plain objects to avoid Firestore serialization issues
+      workingHours: createPharmacyDto.workingHours.map(hour => ({
+        day: hour.day,
+        isOpen: hour.isOpen,
+        openTime: hour.openTime || undefined,
+        closeTime: hour.closeTime || undefined,
+      })),
       status: createPharmacyDto.status || 'active',
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -202,7 +208,16 @@ export class PharmacyService {
     if (updatePharmacyDto.title !== undefined) updateData.title = updatePharmacyDto.title;
     if (updatePharmacyDto.description !== undefined) updateData.description = updatePharmacyDto.description;
     if (updatePharmacyDto.status !== undefined) updateData.status = updatePharmacyDto.status;
-    if (updatePharmacyDto.workingHours !== undefined) updateData.workingHours = updatePharmacyDto.workingHours;
+    
+    // Convert workingHours to plain objects to avoid Firestore serialization issues
+    if (updatePharmacyDto.workingHours !== undefined) {
+      updateData.workingHours = updatePharmacyDto.workingHours.map(hour => ({
+        day: hour.day,
+        isOpen: hour.isOpen,
+        openTime: hour.openTime || undefined,
+        closeTime: hour.closeTime || undefined,
+      }));
+    }
     
     // Convert location DTO to plain object
     if (updatePharmacyDto.location) {
@@ -221,6 +236,20 @@ export class PharmacyService {
       }
       // Upload new image
       updateData.imageUrl = await this.uploadPharmacyImage(file);
+    } 
+    // If imageUrl is provided in DTO and it's different from current (image was uploaded separately)
+    else if (updatePharmacyDto.imageUrl && updatePharmacyDto.imageUrl !== pharmacy.imageUrl) {
+      // Delete old image if exists
+      if (pharmacy.imageUrl) {
+        try {
+          await this.deletePharmacyImage(pharmacy.imageUrl);
+        } catch (error) {
+          // If old image deletion fails, log but continue (old image might be already deleted or invalid)
+          console.error('Failed to delete old image:', error);
+        }
+      }
+      // Use the new imageUrl from DTO
+      updateData.imageUrl = updatePharmacyDto.imageUrl;
     }
 
     // If updating owner info, update the owner document separately

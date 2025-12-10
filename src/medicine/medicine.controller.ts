@@ -24,6 +24,7 @@ export class MedicineController {
 
   // ========================================
   // CREATE MEDICINE (with image uploads)
+  // Front image is required, back image is optional
   // ========================================
   @Post()
   @UseInterceptors(
@@ -40,9 +41,9 @@ export class MedicineController {
       backImage?: Express.Multer.File[];
     },
   ) {
-    // Validate that both images are provided
-    if (!files?.frontImage || !files?.backImage) {
-      throw new BadRequestException('Both front and back images are required');
+    // Validate that front image is provided (back image is optional)
+    if (!files?.frontImage) {
+      throw new BadRequestException('Front image is required');
     }
 
     // TODO: Get admin ID from JWT token (for now using hardcoded)
@@ -51,7 +52,7 @@ export class MedicineController {
     return this.medicineService.create(
       createMedicineDto,
       files.frontImage[0],
-      files.backImage[0],
+      files.backImage?.[0],
       adminId,
     );
   }
